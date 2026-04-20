@@ -1,13 +1,10 @@
-```javascript
 import { createClient } from '@supabase/supabase-js'
 
-// Initialize Supabase
 const supabase = createClient(
   process.env.SUPABASE_URL,
   process.env.SUPABASE_ANON_KEY
 )
 
-// Claude API helper
 async function callClaude(prompt, systemPrompt = '') {
   const response = await fetch('https://api.anthropic.com/v1/messages', {
     method: 'POST',
@@ -28,23 +25,19 @@ async function callClaude(prompt, systemPrompt = '') {
   return data.content[0].text.trim()
 }
 
-// Normalize identity
 async function normalizeIdentity(text) {
   const systemPrompt = "You are a deterministic text normalization engine. Convert input to normalized identity key. Rules: lowercase, remove articles (a/an/the), lemmatize verbs, extract core: action_target_context (snake_case). Return ONLY identity string."
   return await callClaude(`Normalize: ${text}`, systemPrompt)
 }
 
-// Assign category  
 async function assignCategory(text) {
   const systemPrompt = "Assign category from: Relationships, Work, Finance, Health, Self. Choose most direct life domain. If uncertain → Self. Return only category string."
   return await callClaude(`Categorize: ${text}`, systemPrompt)
 }
 
-// API Routes
 export default async function handler(req, res) {
   const { method, url } = req
   
-  // FIXED CORS - Allow localhost and production
   const origin = req.headers.origin
   if (origin && (origin.includes('localhost') || origin.includes('railway.app'))) {
     res.setHeader('Access-Control-Allow-Origin', origin)
@@ -60,16 +53,13 @@ export default async function handler(req, res) {
   }
 
   try {
-    // Parse URL path
     const path = new URL(url, `http://${req.headers.host}`).pathname
 
     if (path === '/drift/create' && method === 'POST') {
       const { text, user_id } = req.body
       
-      // Normalize identity
       const identity = await normalizeIdentity(text)
       
-      // Check existing
       const { data: existing } = await supabase
         .from('drift_entries')
         .select('*')
@@ -78,7 +68,6 @@ export default async function handler(req, res) {
         .single()
       
       if (existing) {
-        // Increment repetition
         const { data } = await supabase
           .from('drift_entries')
           .update({
@@ -91,7 +80,6 @@ export default async function handler(req, res) {
         
         return res.json(data)
       } else {
-        // Create new
         const category = await assignCategory(text)
         
         const { data } = await supabase
@@ -128,7 +116,6 @@ export default async function handler(req, res) {
       }
       
       if (action === 'done') {
-        // Get drift entry
         const { data: drift } = await supabase
           .from('drift_entries')
           .select('*')
@@ -136,12 +123,10 @@ export default async function handler(req, res) {
           .eq('user_id', user_id)
           .single()
         
-        // Calculate resolution time
         const resolution_time_seconds = Math.floor(
           (new Date() - new Date(drift.created_at)) / 1000
         )
         
-        // Move to swift
         const { data: swift } = await supabase
           .from('swift_entries')
           .insert({
@@ -157,7 +142,6 @@ export default async function handler(req, res) {
           .select()
           .single()
         
-        // Remove from drift
         await supabase
           .from('drift_entries')
           .delete()
@@ -212,4 +196,3 @@ export default async function handler(req, res) {
     return res.status(500).json({ error: error.message })
   }
 }
-```
