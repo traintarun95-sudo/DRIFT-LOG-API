@@ -1,12 +1,13 @@
-import { createClient } from '@supabase/supabase-js'
-import { createServer } from 'http'
+const { createClient } = require('@supabase/supabase-js')
+const http = require('http')
+const url = require('url')
 
 const supabase = createClient(
   process.env.SUPABASE_URL,
   process.env.SUPABASE_ANON_KEY
 )
 
-const server = createServer(async (req, res) => {
+const server = http.createServer(async (req, res) => {
   res.setHeader('Access-Control-Allow-Origin', '*')
   res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS')
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type')
@@ -17,7 +18,15 @@ const server = createServer(async (req, res) => {
     return
   }
 
-  if (req.url === '/drift/create' && req.method === 'POST') {
+  const parsedUrl = url.parse(req.url, true)
+
+  if (parsedUrl.pathname === '/' && req.method === 'GET') {
+    res.writeHead(200, { 'Content-Type': 'application/json' })
+    res.end(JSON.stringify({ message: 'API working' }))
+    return
+  }
+
+  if (parsedUrl.pathname === '/drift/create' && req.method === 'POST') {
     let body = ''
     req.on('data', chunk => body += chunk.toString())
     req.on('end', async () => {
@@ -45,8 +54,8 @@ const server = createServer(async (req, res) => {
     return
   }
 
-  res.writeHead(200, { 'Content-Type': 'application/json' })
-  res.end(JSON.stringify({ message: 'API working' }))
+  res.writeHead(404, { 'Content-Type': 'application/json' })
+  res.end(JSON.stringify({ error: 'Not found' }))
 })
 
 const PORT = process.env.PORT || 3000
