@@ -1,3 +1,4 @@
+```javascript
 import { createClient } from '@supabase/supabase-js'
 
 // Initialize Supabase
@@ -43,8 +44,14 @@ async function assignCategory(text) {
 export default async function handler(req, res) {
   const { method, url } = req
   
-  // Enable CORS
-  res.setHeader('Access-Control-Allow-Origin', '*')
+  // FIXED CORS - Allow localhost and production
+  const origin = req.headers.origin
+  if (origin && (origin.includes('localhost') || origin.includes('railway.app'))) {
+    res.setHeader('Access-Control-Allow-Origin', origin)
+  } else {
+    res.setHeader('Access-Control-Allow-Origin', '*')
+  }
+  
   res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS')
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type')
   
@@ -205,3 +212,4 @@ export default async function handler(req, res) {
     return res.status(500).json({ error: error.message })
   }
 }
+```
