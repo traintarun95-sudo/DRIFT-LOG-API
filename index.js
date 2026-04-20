@@ -27,12 +27,12 @@ async function callClaude(prompt, systemPrompt = '') {
 
 async function normalizeIdentity(text) {
   const systemPrompt = "You are a deterministic text normalization engine. Convert input to normalized identity key. Rules: lowercase, remove articles (a/an/the), lemmatize verbs, extract core: action_target_context (snake_case). Return ONLY identity string."
-  return await callClaude(`Normalize: ${text}`, systemPrompt)
+  return await callClaude('Normalize: ' + text, systemPrompt)
 }
 
 async function assignCategory(text) {
   const systemPrompt = "Assign category from: Relationships, Work, Finance, Health, Self. Choose most direct life domain. If uncertain → Self. Return only category string."
-  return await callClaude(`Categorize: ${text}`, systemPrompt)
+  return await callClaude('Categorize: ' + text, systemPrompt)
 }
 
 export default async function handler(req, res) {
